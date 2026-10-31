@@ -1,0 +1,47 @@
+{
+  "name": "kristinka-plavanie",
+  "version": "1.0.0",
+  "description": "Plavecká stránka Kristínky Hodoňovej",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/factoryofcrazy-coder/plavanie.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/factoryofcrazy-coder/plavanie/issues"
+  },
+  "homepage": "https://github.com/factoryofcrazy-coder/plavanie#readme",
+  "dependencies": {
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource/atkinson-hyperlegible": "^5.3.0",
+    "@supabase/supabase-js": "^2.118.0",
+    "fast-xml-parser": "^5.11.2",
+    "fflate": "^0.8.3",
+    "framer-motion": "^14.9.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.30.6",
+    "recharts": "^3.10.1"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vercel/node": "^29.0.1",
+    "@vitejs/plugin-react": "^4.7.0",
+    "tsx": "^4.23.15",
+    "typescript": "^5.9.3",
+    "vite": "^5.4.21"
+  },
+  "private": true,
+  "engines": {
+    "node": "22.x"
+  }
+}
