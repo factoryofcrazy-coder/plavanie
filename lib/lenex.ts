@@ -166,7 +166,7 @@ export function parseLenexXml(xml: string): ParsedMeet {
       }
       for (const r of arr<any>(a.RESULTS?.RESULT)) {
         const ev = events.get(String(r.eventid));
-        if (!ev || ev.relay || !validStrokes.has(ev.stroke) || !ev.distance) continue;
+        if (!ev || ev.relay || !validStrokes.has(ev.stroke) || !ev.distance || ev.distance > 1500) continue; // bez diaľkového plávania
         const status = r.status ? String(r.status).toUpperCase() : null;
         if (status === 'EXH') continue;
         const ms = parseSwimTime(r.swimtime);
