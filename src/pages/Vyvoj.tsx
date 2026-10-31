@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Area, CartesianGrid, ComposedChart, Line, ReferenceLine, ResponsiveContainer, Scatter, Tooltip, XAxis, YAxis } from 'recharts';
+import Splits from '../components/Splits';
 import { DisciplinePicker, Empty, Loader, type Disc } from '../components/ui';
 import { useData } from '../lib/data';
 import { courseName, disciplineKey, disciplineLabel, fmtDate, fmtDateLong, fmtGap, fmtTime, goalStroke, parseDisciplineKey, resultPdf } from '../lib/format';
@@ -128,6 +129,8 @@ export default function Vyvoj() {
               </ComposedChart>
             </ResponsiveContainer>
           </section>
+
+          <Splits list={list} stroke={d.stroke} distance={d.distance} course={d.course} birthYear={athlete.birth_year ?? 2013} />
 
           <section className="block">
             <h2>Všetky štarty</h2>

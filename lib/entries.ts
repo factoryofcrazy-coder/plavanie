@@ -141,9 +141,9 @@ async function pdfLines(url: string): Promise<string[] | null> {
 
 const STROKE_WORDS: [RegExp, string][] = [[/vo[lľ]n|free/i, 'FREE'], [/znak|back/i, 'BACK'], [/prsia|breast/i, 'BREAST'], [/mot[yý]l|fly|butter/i, 'FLY'], [/poloh|medley|im\b/i, 'MEDLEY']];
 
-export async function meetStartlist(meetId: number, who: Who): Promise<MeetStart> {
+export async function meetStartlist(meetId: number, who: Who, forcePdf = false): Promise<MeetStart> {
   // 1) Lenex
-  try {
+  if (!forcePdf) try {
     const res = await fetch(`${LIVE_BASE}/${meetId}/results.lxf`, { headers: { 'User-Agent': UA } });
     if (res.ok) {
       const buf = new Uint8Array(await res.arrayBuffer());

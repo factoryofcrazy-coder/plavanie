@@ -2,6 +2,8 @@ import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, type Variants } from 'framer-motion';
 import PoolVisual from '../components/PoolVisual';
+import Limits from '../components/Limits';
+import NextMeets from '../components/NextMeets';
 import { CountUp, Empty, Loader } from '../components/ui';
 import { groupByMeet, meetCity, meetTitle, useData, type PB, type Swim } from '../lib/data';
 import { courseShort, disciplineLabel, fmtDate, fmtTime, plural, resultPdf, seasonOf, STROKES, strokeName, type Course } from '../lib/format';
@@ -101,6 +103,7 @@ export default function Prehlad() {
           </Empty>
         ) : (
           <>
+            <NextMeets />
             <section className="section">
               <header className="section-head">
                 <div>
@@ -146,6 +149,8 @@ export default function Prehlad() {
               </motion.div>
               <p className="note">Kliknutím na disciplínu otvoríš vývoj časov a predikciu.</p>
             </section>
+
+            <Limits />
 
             <section className="section">
               <header className="section-head">

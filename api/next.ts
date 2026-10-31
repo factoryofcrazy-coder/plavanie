@@ -19,7 +19,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const pdf = await getDocumentProxy(new Uint8Array(await r.arrayBuffer()));
       const page = await pdf.getPage(1);
       const tc: any = await page.getTextContent();
-      return res.json({ ev, events: idx!.events.slice(0, 40), items: tc.items.slice(0, 120).map((i: any) => [Math.round(i.transform[4]), Math.round(i.transform[5]), i.str]) });
+      return res.json({ ev, events: idx!.events.slice(0, 40), items: tc.items.slice(0, 160).map((i: any) => [Math.round(i.transform[4]), Math.round(i.transform[5]), i.str]) });
+    }
+    if (req.query.meet) {
+      // test na konkrétnych pretekoch
+      return res.json(await meetStartlist(parseInt(String(req.query.meet), 10), WHO, !!req.query.pdf));
     }
     const listed = (await listNationMeets('SVK')).filter((m) => m.status !== 'finished').slice(0, 6);
     const meets = await Promise.all(
