@@ -94,18 +94,25 @@ export function fromStartPdfText(lines: string[], who: Who): Omit<StartEntry, 'e
   while (he < lines.length && !heatRe.test(lines[he])) he++;
   const hm = hs >= 0 ? lines[hs].match(heatRe) : null;
   const parse = (l: string): Neighbor | null => {
-    const m = l.trim().match(/^(\d)\s+(.+)$/);
+    const m = l.trim().match(/^(\d)\s+(\D.+)$/);
     if (!m) return null;
-    const rest = m[2];
-    const times = rest.match(new RegExp(TIME_RE.source, 'g'));
-    const ym = rest.match(/\b(19|20)?(\d{2})\b/);
-    const nm = rest.match(/^([\p{Lu}][\p{L}'-]+(?:\s+[\p{Lu}][\p{L}'-]+)+?)(?=\s+\d|\s+\(|$)/u);
-    const name = (nm?.[1] ?? rest.split(/\s+\d/)[0]).trim();
-    const after = rest.slice(name.length).replace(/^\s*\(?\d{2,4}\)?\s*/, '').replace(new RegExp(`\\s*(${TIME_RE.source}|NT).*$`), '').trim();
-    return {
-      lane: +m[1], name, club: after || null, entry_ms: toMs(times?.[times.length - 1]),
-      year: ym ? (ym[2].length === 2 ? 2000 + +ym[2] : +ym[2]) : null, me: me(l) || undefined,
-    };
+    const rest = m[2].replace(/\bN\s?T\b/g, 'NT');
+    const cut = rest.search(/\s\d/);
+    const name = (cut > 0 ? rest.slice(0, cut) : rest.replace(/\s+NT$/, '')).trim();
+    let tail = cut > 0 ? rest.slice(cut).trim() : '';
+    const ym = tail.match(/^(\d)\s?(\d)(?:\s?(\d)\s?(\d))?(?=\s|$)/);
+    let year: number | null = null;
+    if (ym) { year = ym[3] ? +(ym[1] + ym[2] + ym[3] + ym[4]) : 2000 + +(ym[1] + ym[2]); tail = tail.slice(ym[0].length).trim(); }
+    const times = tail.match(new RegExp(TIME_RE.source, 'g'));
+    let club = tail.replace(new RegExp(`\\s*(${TIME_RE.source}|NT)\\s*$`), '').trim();
+    // "T T D K" -> "TTDK" (PDF roztiahne písmená)
+    const toks = club.split(/\s+/).filter(Boolean), parts: string[] = [];
+    for (let k = 0; k < toks.length; k++) {
+      if (toks[k].length === 1 && k > 0 && toks[k - 1].length === 1) parts[parts.length - 1] += toks[k];
+      else parts.push(toks[k]);
+    }
+    club = parts.join(' ');
+    return { lane: +m[1], name, club: club || null, entry_ms: toMs(times?.[times.length - 1]), year, me: me(l) || undefined };
   };
   const nb = lines.slice(hs + 1, he).map(parse).filter((x): x is Neighbor => !!x && x.name.length > 3);
   const mine = nb.find((x) => x.me) ?? parse(lines[idx]);
@@ -133,7 +140,19 @@ export async function pdfLines(url: string): Promise<string[] | null> {
       if (!byY.has(k)) byY.set(k, []);
       byY.get(k)!.push({ x: it.transform[4], s: it.str });
     }
-    for (const y of [...byY.keys()].sort((a, b) => b - a)) out.push(byY.get(y)!.sort((a, b) => a.x - b.x).map((p) => p.s.trim()).join(' '));
+    const rows = [...byY.keys()].sort((a, b) => b - a).map((y) => byY.get(y)!.sort((a, b) => a.x - b.x));
+    const join = (r: { x: number; s: string }[]) => r.map((p) => p.s.trim()).join(' ');
+    // Splash dáva rozplavby často do dvoch stĺpcov – vtedy najprv ľavý, potom pravý stĺpec
+    const twoCol = rows.some((r) => (join(r).match(/rozplavba|heat|beh\s+\d/gi) ?? []).length >= 2);
+    if (!twoCol) { for (const r of rows) out.push(join(r)); continue; }
+    const mid = page.getViewport({ scale: 1 }).width / 2;
+    const left: string[] = [], right: string[] = [];
+    for (const r of rows) {
+      const L = r.filter((p) => p.x < mid), R = r.filter((p) => p.x >= mid);
+      if (L.length) left.push(join(L));
+      if (R.length) right.push(join(R));
+    }
+    out.push(...left, ...right);
   }
   void extractText;
   return out;

@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { listNationMeets, fetchMeetIndex } from '../lib/splash.js';
-import { meetStartlist, pdfLines, type Who } from '../lib/entries.js';
+import { listNationMeets } from '../lib/splash.js';
+import { meetStartlist, type Who } from '../lib/entries.js';
 
 export const config = { maxDuration: 60 };
 
@@ -9,22 +9,6 @@ const WHO: Who = { last: 'Hodoňová', first: 'Kristínka', year: 2013 };
 // Verejné: najbližšie preteky a jej štarty zo štartových listín (cache na CDN)
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    if (req.query.debug) {
-      const id = parseInt(String(req.query.debug), 10);
-      const idx = await fetchMeetIndex(id);
-      const ev = idx?.events.find((e) => e.start);
-      if (!ev) return res.json({ idx });
-      const { getDocumentProxy } = await import('unpdf');
-      const r = await fetch(ev.start!);
-      const pdf = await getDocumentProxy(new Uint8Array(await r.arrayBuffer()));
-      const page = await pdf.getPage(1);
-      const tc: any = await page.getTextContent();
-      return res.json({ ev, events: idx!.events.slice(0, 40), items: tc.items.slice(0, 160).map((i: any) => [Math.round(i.transform[4]), Math.round(i.transform[5]), i.str]) });
-    }
-    if (req.query.lines) {
-      const lines = await pdfLines(`https://live.swimrankings.net/${parseInt(String(req.query.lines), 10)}/StartList_${parseInt(String(req.query.ev ?? '1'), 10)}.pdf`);
-      return res.json({ lines });
-    }
     if (req.query.meet) {
       // test na konkrétnych pretekoch
       return res.json(await meetStartlist(parseInt(String(req.query.meet), 10), WHO, !!req.query.pdf));
