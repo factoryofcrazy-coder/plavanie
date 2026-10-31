@@ -11,7 +11,8 @@ interface Bench { stroke: Stroke; distance: number; course: Course; starters: nu
 /** Cesta na M SR: limity pre jej vek na najbližších majstrovstvách + čo stačilo na medailu a top 8 minulý rok */
 export default function Limits() {
   const { athlete, swims } = useData();
-  const [limits, setLimits] = useState<Limit[]>([]);
+  const [all, setAll] = useState<Limit[]>([]);
+  const [target, setTarget] = useState<string | null>(null);
   const [bench, setBench] = useState<Bench[]>([]);
   const [course, setCourse] = useState<Course>('LCM');
 
@@ -24,8 +25,10 @@ export default function Limits() {
   useEffect(() => {
     (async () => {
       const { data: l } = await supabase.from('limits').select('*').eq('gender', athlete?.gender ?? 'F').eq('age', age).order('season', { ascending: false });
-      const latest = (l ?? [])[0]?.season;
-      setLimits(((l ?? []) as Limit[]).filter((x) => x.season === latest));
+      // pre každý cieľ (M SR, reprezentácia…) iba najnovšie limity
+      const latest = new Map<string, string>();
+      for (const x of (l ?? []) as Limit[]) if (!latest.has(x.name) || x.season > latest.get(x.name)!) latest.set(x.name, x.season);
+      setAll(((l ?? []) as Limit[]).filter((x) => latest.get(x.name) === x.season));
       const { data: st } = await supabase.from('settings').select('value').eq('key', 'benchmark_meets').maybeSingle();
       const meetId = parseInt(String(st?.value ?? '').split(',')[0], 10);
       if (meetId) {
@@ -36,8 +39,13 @@ export default function Limits() {
     })();
   }, [age, by, athlete?.gender]);
 
+  const targets = useMemo(() => [...new Set(all.map((l) => l.name))].sort((a, b) => (a.startsWith('M SR') ? -1 : b.startsWith('M SR') ? 1 : b.localeCompare(a))), [all]);
+  const name = target && targets.includes(target) ? target : targets[0];
+  const limits = all.filter((l) => l.name === name);
+  const isRepre = /reprezent/i.test(name ?? '');
   const season = limits[0]?.season;
-  const qualFrom = season ? `${+season}-05-01` : '';
+  // M SR: kvalifikácia od 1. 5. predošlého roka; reprezentácia (zaradenie k 1. 1.): výkony z tohto roka
+  const qualFrom = isRepre ? `${now.getFullYear()}-01-01` : season ? `${+season}-05-01` : '';
   const rows = useMemo(() => {
     const ls = limits.filter((l) => l.course === course);
     return STROKES.flatMap((st) =>
@@ -46,10 +54,10 @@ export default function Limits() {
         const best = mine.reduce<number | null>((m, s) => (m == null || s.swim_ms! < m ? s.swim_ms! : m), null);
         const fresh = mine.filter((s) => s.race_date >= qualFrom).reduce<number | null>((m, s) => (m == null || s.swim_ms! < m ? s.swim_ms! : m), null);
         const b = bench.find((x) => x.stroke === l.stroke && x.distance === l.distance && x.course === l.course);
-        return { l, best, fresh, b };
+        return { l, best, fresh, b: isRepre ? undefined : b };
       }),
     );
-  }, [limits, swims, course, bench, qualFrom]);
+  }, [limits, swims, course, bench, qualFrom, isRepre]);
 
   if (!limits.length) return null;
   const done = rows.filter((r) => r.fresh != null && r.fresh <= r.l.limit_ms).length;
@@ -59,8 +67,8 @@ export default function Limits() {
     <section className="section limits" aria-labelledby="limits-h">
       <header className="section-head">
         <div>
-          <p className="eyebrow">Majstrovstvá Slovenska {champYear}</p>
-          <h2 id="limits-h">Cesta na M SR</h2>
+          <p className="eyebrow">{isRepre ? `Reprezentácia od 1. 1. ${now.getFullYear() + 1}` : `Majstrovstvá Slovenska ${champYear}`}</p>
+          <h2 id="limits-h">{isRepre ? 'Cesta do reprezentácie' : 'Cesta na M SR'}</h2>
         </div>
         <div className="tabs" role="radiogroup" aria-label="Bazén">
           {(['LCM', 'SCM'] as Course[]).map((c) => (
@@ -70,6 +78,16 @@ export default function Limits() {
           ))}
         </div>
       </header>
+
+      {targets.length > 1 && (
+        <div className="seg limits-targets" role="radiogroup" aria-label="Cieľ">
+          {targets.map((t) => (
+            <button key={t} role="radio" aria-checked={t === name} className={t === name ? 'on' : ''} onClick={() => setTarget(t)}>
+              {t.startsWith('M SR') ? `M SR ${champYear}` : t.replace('Reprezentácia – ', 'Repre ')}
+            </button>
+          ))}
+        </div>
+      )}
 
       <p className="limits-sum">
         <strong>{done}</strong> z {rows.length} limitov splnených pre kategóriu {age} rokov.
@@ -119,8 +137,10 @@ export default function Limits() {
         })}
       </div>
       <p className="note">
-        Limity: {limits[0].source}. Kým SPF nezverejní limity na {champYear}, sú tu limity z roku {season} pre {age}-ročné.
-        {hasBench && ` Top 8 a bronz: slovenské dievčatá ročníka ${by - 1} na M SR ${season} (50 m bazén).`}
+        {isRepre
+          ? `Limity: ${limits[0].source} (${age}-ročné). Tím MJ-B je širšia reprezentácia mladších junioriek, Tím MJ-A užšia. O zaradení rozhoduje manažér reprezentácie a Rada SPF.`
+          : `Limity: ${limits[0].source}. Kým SPF nezverejní limity na ${champYear}, sú tu limity z roku ${season} pre ${age}-ročné.`}
+        {!isRepre && hasBench && ` Top 8 a bronz: slovenské dievčatá ročníka ${by - 1} na M SR ${season} (50 m bazén).`}
       </p>
     </section>
   );
