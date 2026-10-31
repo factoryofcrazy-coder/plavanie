@@ -11,7 +11,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!secret || given !== secret) return res.status(401).json({ error: 'Neplatný kľúč' });
 
   const db = await adminClient();
-  if (req.query.source === 'swimapp') {
+  if ((req.query.mode === 'season' || req.query.source === 'swimapp')) {
     // doplnenie celej sezóny z termínovej listiny SPF (iba nenahraté preteky, bez masters a diaľkového plávania)
     const all = await listSwimappMeets(String(req.query.url || 'https://www.swimapp.sk/tl/'));
     const { data: have } = await db.from('meets').select('id');
