@@ -13,3 +13,6 @@ Osobná stránka plavkyne: osobné rekordy, vývoj a predikcie časov, porovnani
 
 ## Premenné prostredia
 `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`, `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `CRON_SECRET`
+
+## Nasadenie
+Každý push do `main` sa automaticky nasadí na https://kristinka-plavanie.vercel.app
