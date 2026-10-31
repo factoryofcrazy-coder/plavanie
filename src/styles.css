@@ -354,9 +354,11 @@ select:focus, input:focus, textarea:focus { outline: none; border-color: var(--w
 .st { align-self: flex-start; font-size: .75rem; font-weight: 700; padding: 2px 10px; border-radius: 999px; }
 .st.live { background: var(--rope-red); color: #fff; animation: pulse 1.6s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: .65; } }
-.st.soon { background: #fdf0cc; color: #7a5600; }
-.st.done { background: var(--foam); color: var(--ink-soft); }
-.lt { font-size: .95rem; }
+.lm { color: var(--ink-soft); font-size: .88rem; }
+.section-note { margin: -8px 0 16px; }
+.st.upcoming { background: #fdf0cc; color: #7a5600; }
+.st.finished { background: var(--foam); color: var(--ink-soft); }
+.lt { font-weight: 700; font-size: 1rem; line-height: 1.3; }
 .meets { display: grid; gap: 14px; }
 .meet { background: #fff; border-radius: var(--r-l); padding: 18px 20px; }
 .meet header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; flex-wrap: wrap; }

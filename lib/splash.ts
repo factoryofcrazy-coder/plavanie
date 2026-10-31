@@ -32,6 +32,40 @@ export interface ListedMeet {
   id: number;
   text: string;
   pool: string | null;
+  status: 'live' | 'upcoming' | 'finished';
+  name: string;
+  date: string | null;
+  city: string | null;
+  nation: string | null;
+}
+
+const MON: Record<string, number> = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
+
+/** "Upcoming 7 Nov 2026 7 Nov 25m Názov 🇸🇰 Mesto SVK · 25m …" -> polia */
+export function parseListedText(raw: string) {
+  const text = raw.replace(/^[^>]*>\s*/, '').trim();
+  const status: ListedMeet['status'] = /^live/i.test(text) ? 'live' : /^upcoming/i.test(text) ? 'upcoming' : 'finished';
+  const body = text.replace(/^(upcoming|live|finished)\s+/i, '');
+  const dm = body.match(/^(\d{1,2})(?:\s*[-–]\s*(\d{1,2}))?\s+([A-Za-z]{3})\s+(\d{4})/);
+  let date: string | null = null;
+  if (dm) {
+    const mo = MON[dm[3].toLowerCase()];
+    date = dm[2] ? `${dm[1]}.–${dm[2]}. ${mo}. ${dm[4]}` : `${dm[1]}. ${mo}. ${dm[4]}`;
+  }
+  const rest = body.match(/\b(25|50)\s?m\s+(.+)$/);
+  const pool = rest?.[1] ?? null;
+  let name = rest?.[2] ?? body;
+  let city: string | null = null, nation: string | null = null;
+  const flag = name.match(/\s*[\u{1F1E6}-\u{1F1FF}]{2}\s*(.+?)\s+([A-Z]{3})\b/u);
+  if (flag) {
+    city = flag[1].trim();
+    nation = flag[2];
+    name = name.slice(0, flag.index).trim();
+  } else {
+    const alt = name.match(/^(.*?)\s+([A-Z]{2}\s+)?([^·]+?)\s+([A-Z]{3})\s+·/);
+    if (alt) { name = alt[1]; city = alt[3]; nation = alt[4]; }
+  }
+  return { status, date, pool, name: name.replace(/\s+·.*$/, '').trim(), city, nation };
 }
 
 /** Zoznam slovenských pretekov z live.swimrankings.net (posledné týždne + nadchádzajúce) */
@@ -45,8 +79,7 @@ export async function listNationMeets(nation = 'SVK'): Promise<ListedMeet[]> {
     if (!m) continue;
     const id = +m[1];
     const text = stripTags(row.split(/<\/tr>/i)[0]);
-    const pool = text.match(/\b(25|50)\s?m\b/)?.[1] ?? null;
-    if (!out.has(id)) out.set(id, { id, text, pool });
+    if (!out.has(id)) out.set(id, { id, text, ...parseListedText(row.split(/<\/tr>/i)[0].replace(/^[^>]*>/, '').replace(/<[^>]+>/g, ' ').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/\s+/g, ' ')) });
   }
   return [...out.values()];
 }

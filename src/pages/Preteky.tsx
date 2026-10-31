@@ -3,9 +3,10 @@ import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Empty, LaneRope, Loader } from '../components/ui';
 import { useData, type Swim } from '../lib/data';
+import { supabase } from '../lib/supabase';
 import { courseName, disciplineLabel, fmtDate, fmtTime, LIVE, resultPdf } from '../lib/format';
 
-interface Listed { id: number; text: string; pool: string | null }
+interface Listed { id: number; text: string; pool: string | null; status: 'live' | 'upcoming' | 'finished'; name: string; date: string | null; city: string | null }
 interface MeetIndex {
   id: number;
   title: string;
@@ -106,6 +107,10 @@ export default function Preteky() {
   const nav = useNavigate();
   const [listed, setListed] = useState<Listed[] | null>(null);
   const [listErr, setListErr] = useState(false);
+  const [dbNames, setDbNames] = useState<Map<number, { name: string; city: string | null }>>(new Map());
+  useEffect(() => {
+    supabase.from('meets').select('id,name,city').then(({ data }) => setDbNames(new Map((data ?? []).map((m: any) => [m.id, m]))));
+  }, []);
 
   useEffect(() => {
     fetch('/api/meet?list=SVK')
@@ -133,21 +138,25 @@ export default function Preteky() {
       </header>
 
       <section className="block">
-        <h2>Slovenské preteky teraz</h2>
+        <h2>Slovenské preteky</h2>
+        <p className="muted section-note">Aktuálne a nadchádzajúce preteky. Ťukni na ne a otvoríš štartovky a výsledky v PDF.</p>
         {listErr ? (
           <p className="muted">Zoznam pretekov sa nepodarilo načítať. Skús to o chvíľu.</p>
         ) : !listed ? (
           <Loader />
         ) : (
           <ul className="live-list">
-            {listed.slice(0, 14).map((m) => {
-              const t = m.text.replace(/^(Upcoming|Live|Finished|Nadchádzajúce|Prebieha|Ukončené)\s*/i, '');
-              const status = /live|prebieha/i.test(m.text) ? 'live' : /upcoming|nadch/i.test(m.text) ? 'soon' : 'done';
+            {listed.slice(0, 15).map((m) => {
+              const db = dbNames.get(m.id);
+              const label = m.status === 'live' ? 'Práve prebieha' : m.status === 'upcoming' ? 'Čoskoro' : 'Skončené';
               return (
                 <li key={m.id}>
                   <button onClick={() => nav(`/preteky/${m.id}`)}>
-                    <span className={`st ${status}`}>{status === 'live' ? 'Práve prebieha' : status === 'soon' ? 'Čoskoro' : 'Skončené'}</span>
-                    <span className="lt">{t}</span>
+                    <span className={`st ${m.status}`}>{label}</span>
+                    <span className="lt">{db?.name ?? m.name}</span>
+                    <span className="lm">
+                      {[m.date, db?.city ?? m.city, m.pool ? `${m.pool} m bazén` : null].filter(Boolean).join(', ')}
+                    </span>
                   </button>
                 </li>
               );
@@ -159,7 +168,7 @@ export default function Preteky() {
       <LaneRope />
 
       <section className="block">
-        <h2>Jej preteky</h2>
+        <h2>Kristínkine preteky</h2>
         {loading ? (
           <Loader />
         ) : groups.length === 0 ? (

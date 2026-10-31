@@ -36,7 +36,7 @@ export default function Admin() {
   const [meets, setMeets] = useState('');
   const [busy, setBusy] = useState(false);
   const [results, setResults] = useState<ImportResult[]>([]);
-  const [listed, setListed] = useState<{ id: number; text: string }[]>([]);
+  const [listed, setListed] = useState<{ id: number; name: string; date: string | null; city: string | null }[]>([]);
   const [known, setKnown] = useState<Set<number>>(new Set());
 
   useEffect(() => {
@@ -96,7 +96,7 @@ export default function Admin() {
           <ul className="listed">
             {listed.map((m) => (
               <li key={m.id}>
-                <span>{m.text.replace(/^(Upcoming|Live|Finished)\s*/i, '')}</span>
+                <span>{m.name}{m.date ? `, ${m.date}` : ''}{m.city ? `, ${m.city}` : ''}</span>
                 <button className="btn ghost small" disabled={busy} onClick={() => runImport(String(m.id))}>
                   {known.has(m.id) ? 'Aktualizovať' : 'Nahrať'}
                 </button>
