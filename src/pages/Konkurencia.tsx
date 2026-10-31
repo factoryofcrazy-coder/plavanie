@@ -148,11 +148,19 @@ export default function Konkurencia() {
           <div className="h2h">
             {rivals.map((r) => {
               const h = h2h.find((x) => x.id === r.athlete.id)!;
+              const idx = rivals.indexOf(r);
+              const common = rows.filter((x) => x.others[idx]);
+              const faster = common.filter((x) => x.p.best.swim_ms! < x.others[idx]!.best.swim_ms!).length;
               return (
                 <div key={r.athlete.id} className="h2h-card">
                   <span className="h2h-name">proti {r.athlete.first_name} {r.athlete.last_name}</span>
                   <span className="h2h-score"><b>{h.w}</b> : <b>{h.l}</b></span>
-                  <span className="muted small">{h.w + h.l ? 'vzájomné súboje v rovnakej disciplíne' : 'zatiaľ spolu neplávali'}</span>
+                  <span className="muted small">{h.w + h.l ? 'výhry : prehry v spoločných rozplavbách' : 'zatiaľ spolu neplávali v rovnakej disciplíne'}</span>
+                  {common.length > 0 && (
+                    <span className="h2h-pb">
+                      Rýchlejší osobák má {me.first_name} v <b>{faster}</b> z {common.length} disciplín ({courseShort[course]} bazén)
+                    </span>
+                  )}
                 </div>
               );
             })}
@@ -162,6 +170,9 @@ export default function Konkurencia() {
             <p className="muted">V {courseShort[course]} bazéne nemajú spoločnú disciplínu.</p>
           ) : (
             <>
+              <p className="muted small legend">
+                Pod časom súperky je rozdiel oproti {me.first_name}: <span className="gap ahead inline">červený</span> znamená, že súperka je rýchlejšia, <span className="gap behind inline">zelený</span>, že je pomalšia.
+              </p>
               <div className="table-scroll">
                 <table className="cmp">
                   <thead>
@@ -182,7 +193,7 @@ export default function Konkurencia() {
                               <>
                                 {fmtTime(o.best.swim_ms)}
                                 <span className={o.best.swim_ms! < p.best.swim_ms! ? 'gap ahead' : 'gap behind'}>
-                                  {o.best.swim_ms! < p.best.swim_ms! ? `je pred ňou ${fmtGap(p.best.swim_ms! - o.best.swim_ms!).slice(1)}` : `za ňou ${fmtGap(o.best.swim_ms! - p.best.swim_ms!).slice(1)}`}
+                                  {fmtGap(o.best.swim_ms! - p.best.swim_ms!)}
                                 </span>
                               </>
                             ) : '–'}

@@ -48,6 +48,7 @@ export default function Rebricek() {
   const d: Disc = params.get('d') ? parseDisciplineKey(params.get('d')!) : fallback;
   const period = periods.find((p) => p.id === params.get('o')) ?? periods[2];
   const group = groups.find((g) => g.id === params.get('r')) ?? groups[0];
+  const onlySvk = params.get('n') !== 'vsetci';
   const set = (k: string, v: string) => {
     const n = new URLSearchParams(params);
     n.set(k, v);
@@ -58,12 +59,12 @@ export default function Rebricek() {
   useEffect(() => {
     setRows(null);
     supabase
-      .rpc('leaderboard', {
+      .rpc('leaderboard2', {
         p_stroke: d.stroke, p_distance: d.distance, p_course: d.course, p_gender: me?.gender ?? 'F',
-        p_birth_from: group.from, p_birth_to: group.to, p_from: period.from, p_to: period.to,
+        p_birth_from: group.from, p_birth_to: group.to, p_from: period.from, p_to: period.to, p_nation: onlySvk ? 'SVK' : null,
       })
       .then(({ data }) => setRows((data as Row[]) ?? []));
-  }, [d.stroke, d.distance, d.course, group.id, period.id, me?.gender]);
+  }, [d.stroke, d.distance, d.course, group.id, period.id, me?.gender, onlySvk]);
 
   const mine = rows?.find((r) => r.athlete_id === me?.id);
   const raceLanes = useMemo(() => {
@@ -80,7 +81,7 @@ export default function Rebricek() {
     <div className="wrap">
       <header className="page-head">
         <h1>Rebríček</h1>
-        <p className="lede">Najlepšie časy plavkýň v disciplíne. Rátajú sa preteky nahraté na túto stránku zo slovenských výsledkov.</p>
+        <p className="lede">Najlepšie časy plavkýň v disciplíne z pretekov SPF nahratých na túto stránku (od marca 2026). Kristínkine staršie časy sú doplnené zo swimrankings.net.</p>
       </header>
 
       <DisciplinePicker value={d} onChange={(x) => set('d', disciplineKey(x.stroke, x.distance, x.course))} />
@@ -95,6 +96,13 @@ export default function Rebricek() {
           <span>Kategória</span>
           <select value={group.id} onChange={(e) => set('r', e.target.value)}>
             {groups.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+          </select>
+        </label>
+        <label>
+          <span>Plavkyne</span>
+          <select value={onlySvk ? 'svk' : 'vsetci'} onChange={(e) => set('n', e.target.value)}>
+            <option value="svk">Iba zo Slovenska</option>
+            <option value="vsetci">Aj zahraničné</option>
           </select>
         </label>
       </div>
@@ -130,7 +138,7 @@ export default function Rebricek() {
           </section>
 
           <LaneRace
-            key={`${disciplineKey(d.stroke, d.distance, d.course)}-${period.id}-${group.id}`}
+            key={`${disciplineKey(d.stroke, d.distance, d.course)}-${period.id}-${group.id}-${onlySvk}`}
             title="Virtuálne finále"
             distance={d.distance}
             pool={d.course === 'LCM' ? 50 : 25}

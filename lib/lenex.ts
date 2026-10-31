@@ -129,7 +129,8 @@ export function parseLenexXml(xml: string): ParsedMeet {
         relay,
       });
       for (const ag of arr<any>(ev.AGEGROUPS?.AGEGROUP)) {
-        const label = ag.name || (ag.agemin && ag.agemax ? `${ag.agemin}–${ag.agemax}` : null);
+        const min = parseInt(ag.agemin ?? '-1', 10), max = parseInt(ag.agemax ?? '-1', 10);
+        const label = ag.name || (min > 0 && max > 0 ? (min === max ? `${min} r.` : `${min}–${max} r.`) : min > 0 ? `${min}+ r.` : max > 0 ? `do ${max} r.` : 'Open');
         if (!label) continue;
         for (const r of arr<any>(ag.RANKINGS?.RANKING)) {
           if (r.resultid && !resultAgegroup.has(String(r.resultid))) resultAgegroup.set(String(r.resultid), label);

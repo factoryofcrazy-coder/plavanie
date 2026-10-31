@@ -43,6 +43,32 @@ export interface Goal {
   target_date: string | null;
 }
 
+/** Kľúč pretekov: nahraté preteky podľa ID, história podľa názvu + mesiaca */
+export const meetKey = (s: Swim) => (s.meet_id ? `m${s.meet_id}` : `c${s.competition ?? ''}|${s.race_date.slice(0, 7)}`);
+export const meetTitle = (s: Swim) => s.meets?.name ?? s.competition?.replace(/,\s*[^,]+$/, '') ?? 'Preteky';
+export const meetCity = (s: Swim) => s.meets?.city ?? s.competition?.match(/,\s*([^,]+)$/)?.[1] ?? null;
+
+const norm = (t: string | null | undefined) => (t ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+
+export function groupByMeet(swims: Swim[]) {
+  // ručné/historické štarty priraď k nahratým pretekom v tom istom meste a termíne
+  const imported = swims.filter((s) => s.meet_id);
+  const keyOf = (s: Swim) => {
+    if (s.meet_id) return meetKey(s);
+    const city = norm(meetCity(s));
+    const t = new Date(s.race_date).getTime();
+    const hit = imported.find((m) => m.course === s.course && Math.abs(new Date(m.race_date).getTime() - t) <= 2 * 86400_000 && (!city || norm(m.meets?.city) === city));
+    return hit ? meetKey(hit) : meetKey(s);
+  };
+  const by = new Map<string, Swim[]>();
+  for (const s of [...swims].sort((a, b) => b.race_date.localeCompare(a.race_date))) {
+    const k = keyOf(s);
+    if (!by.has(k)) by.set(k, []);
+    by.get(k)!.push(s);
+  }
+  return [...by.values()].map((g) => g.sort((a, b) => a.race_date.localeCompare(b.race_date) || (a.event_number ?? 0) - (b.event_number ?? 0)));
+}
+
 export const SWIM_COLS =
   'id,meet_id,event_number,athlete_id,race_date,course,stroke,distance,swim_ms,status,points,reaction_ms,splits,agegroup,club,competition,notes,meets(name,city)';
 

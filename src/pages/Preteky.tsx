@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Empty, LaneRope, Loader } from '../components/ui';
-import { useData, type Swim } from '../lib/data';
+import { groupByMeet, meetCity, meetTitle, useData, type Swim } from '../lib/data';
 import { supabase } from '../lib/supabase';
-import { courseName, disciplineLabel, fmtDate, fmtTime, LIVE, resultPdf } from '../lib/format';
+import { courseName, disciplineLabel, fmtDate, fmtTime, LIVE, plural, resultPdf, seasonOf } from '../lib/format';
 
 interface Listed { id: number; text: string; pool: string | null; status: 'live' | 'upcoming' | 'finished'; name: string; date: string | null; city: string | null }
 interface MeetIndex {
@@ -119,15 +119,16 @@ export default function Preteky() {
       .catch(() => setListErr(true));
   }, []);
 
-  const groups = useMemo(() => {
-    const by = new Map<string, Swim[]>();
-    for (const s of [...swims].reverse()) {
-      const k = String(s.meet_id ?? `${s.competition}|${s.race_date}`);
-      if (!by.has(k)) by.set(k, []);
-      by.get(k)!.push(s);
-    }
-    return [...by.values()];
-  }, [swims]);
+  const groups = useMemo(() => groupByMeet(swims), [swims]);
+  const seasons = useMemo(() => {
+    const set = new Map<string, { label: string; from: string; to: string }>();
+    for (const g of groups) { const se = seasonOf(new Date(g[0].race_date)); set.set(se.label, se); }
+    return [...set.values()];
+  }, [groups]);
+  const [season, setSeason] = useState<string | null>(null);
+  const activeSeason = seasons.find((x) => x.label === season) ?? seasons[0];
+  const shownGroups = activeSeason ? groups.filter((g) => g[0].race_date >= activeSeason.from && g[0].race_date <= activeSeason.to) : [];
+  const [open, setOpen] = useState<Set<string>>(new Set());
   const pbIds = new Set(pbs.map((p) => p.best.id));
 
   return (
@@ -168,40 +169,64 @@ export default function Preteky() {
       <LaneRope />
 
       <section className="block">
-        <h2>Kristínkine preteky</h2>
+        <div className="block-head">
+          <h2>Kristínkine preteky</h2>
+          {seasons.length > 1 && (
+            <div className="seg wrap" role="radiogroup" aria-label="Sezóna">
+              {seasons.map((x) => (
+                <button key={x.label} role="radio" aria-checked={x.label === activeSeason?.label} className={x.label === activeSeason?.label ? 'on' : ''} onClick={() => setSeason(x.label)}>
+                  {x.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
         {loading ? (
           <Loader />
         ) : groups.length === 0 ? (
           <Empty title="Zatiaľ žiadne preteky" />
         ) : (
           <div className="meets">
-            {groups.map((g) => {
-              const s0 = g[0];
+            {shownGroups.map((g) => {
+              const s0 = g.find((x) => x.meet_id) ?? g[0];
+              const key = String(s0.id);
+              const isOpen = open.has(key) || g.length <= 4;
+              const list = isOpen ? g : g.slice(0, 3);
+              const nPb = g.filter((x) => pbIds.has(x.id)).length;
               return (
-                <article key={s0.id} className="meet">
+                <article key={key} className="meet">
                   <header>
                     <div>
-                      <h3>{s0.meets?.name ?? s0.competition ?? 'Preteky'}</h3>
-                      <p className="muted">{s0.meets?.city ? `${s0.meets.city}, ` : ''}{fmtDate(s0.race_date)}, {courseName[s0.course]}</p>
+                      <h3>{meetTitle(s0)}</h3>
+                      <p className="muted">{[meetCity(s0), fmtDate(s0.race_date), courseName[s0.course]].filter(Boolean).join(', ')}</p>
                     </div>
-                    {s0.meet_id && s0.meet_id > 999 && (
-                      <button className="btn ghost small" onClick={() => nav(`/preteky/${s0.meet_id}`)}>Všetky disciplíny</button>
-                    )}
+                    <div className="meet-actions">
+                      {nPb > 0 && <span className="tag pb">{nPb} {plural(nPb, 'osobák', 'osobáky', 'osobákov')}</span>}
+                      {s0.meet_id && s0.meet_id > 999 && (
+                        <button className="btn ghost small" onClick={() => nav(`/preteky/${s0.meet_id}`)}>Všetky disciplíny</button>
+                      )}
+                    </div>
                   </header>
                   <ul>
-                    {g.sort((a, b) => (a.event_number ?? 0) - (b.event_number ?? 0)).map((s) => {
-                      const pdf = resultPdf(s.meet_id, s.event_number);
+                    {list.map((x) => {
+                      const pdf = resultPdf(x.meet_id, x.event_number);
                       return (
-                        <li key={s.id}>
-                          <Link to={`/vyvoj?d=${s.stroke}-${s.distance}-${s.course}`} className="md">{disciplineLabel(s.distance, s.stroke)}</Link>
-                          <span className="mtm">{s.status ?? fmtTime(s.swim_ms)}</span>
-                          <span className="mp">{s.points ? `${s.points} b.` : ''}</span>
-                          {pbIds.has(s.id) && <em className="tag pb">osobák</em>}
-                          {pdf && <a className="pdf" href={pdf} target="_blank" rel="noreferrer">PDF</a>}
+                        <li key={x.id}>
+                          <Link to={`/vyvoj?d=${x.stroke}-${x.distance}-${x.course}`} className="md">{disciplineLabel(x.distance, x.stroke)}</Link>
+                          <span className={`pbmark${pbIds.has(x.id) ? ' on' : ''}`} title={pbIds.has(x.id) ? 'osobný rekord' : undefined} />
+                          <span className="mtm">{x.status ?? fmtTime(x.swim_ms)}</span>
+                          <span className="mp">{x.points ? `${x.points} b.` : ''}</span>
+                          {pdf ? <a className="pdf mini" href={pdf} target="_blank" rel="noreferrer">PDF</a> : <span className="pdf mini off" aria-hidden="true" />}
                         </li>
                       );
                     })}
                   </ul>
+                  {!isOpen && (
+                    <button className="more" onClick={() => setOpen(new Set(open).add(key))}>
+                      Zobraziť ďalšie {g.length - 3} {plural(g.length - 3, 'štart', 'štarty', 'štartov')}
+                    </button>
+                  )}
+                  {g.some((x) => !x.meet_id) && <p className="src">{s0.meet_id ? 'Doplnené' : 'Najlepšie časy sezóny'} podľa swimrankings.net</p>}
                 </article>
               );
             })}

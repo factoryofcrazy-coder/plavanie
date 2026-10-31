@@ -136,12 +136,14 @@ export default function Vyvoj() {
                 <li key={s.id} className={s.swim_ms === pb ? 'is-pb' : ''}>
                   <button className="swim-row" onClick={() => setOpen(open === s.id ? null : s.id)} aria-expanded={open === s.id} disabled={!s.splits}>
                     <span className="sd">{fmtDate(s.race_date)}</span>
-                    <span className="sm">{s.meets?.name ?? s.competition ?? 'Preteky'}</span>
+                    <span className="sm">{s.meets?.name ?? s.competition ?? 'Preteky'}{s.swim_ms === pb && <em className="tag pb">osobák</em>}</span>
                     <span className="st">{s.status ?? fmtTime(s.swim_ms)}</span>
                     <span className="sp">{s.points ? `${s.points} b.` : ''}</span>
                   </button>
-                  {resultPdf(s.meet_id, s.event_number) && (
+                  {resultPdf(s.meet_id, s.event_number) ? (
                     <a className="pdf" href={resultPdf(s.meet_id, s.event_number)!} target="_blank" rel="noreferrer">PDF</a>
+                  ) : (
+                    <span className="pdf off" aria-hidden="true" />
                   )}
                   {open === s.id && s.splits && (
                     <div className="splits">
