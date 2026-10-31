@@ -1,3 +1,4 @@
+import PushToggle from '../components/PushToggle';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -137,6 +138,7 @@ export default function Preteky() {
         <h1>Preteky</h1>
         <p className="lede">Výsledkové listiny v PDF na jedno ťuknutie, aj priamo na pretekoch.</p>
       </header>
+      <PushToggle />
 
       <section className="block">
         <div className="block-head">

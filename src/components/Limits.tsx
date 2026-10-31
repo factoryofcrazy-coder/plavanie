@@ -82,29 +82,30 @@ export default function Limits() {
           <span role="columnheader">Jej čas</span>
           <span role="columnheader">Limit</span>
           <span role="columnheader" className="lt-bar-h">Rozdiel</span>
-          {hasBench && <span role="columnheader" className="lt-b">Top 8 / bronz {+season!}</span>}
+          {hasBench && <span role="columnheader" className="lt-b">Top 8 / bronz</span>}
         </div>
         {rows.map(({ l, best, fresh, b }, i) => {
           const t = fresh ?? best;
           const gap = t != null ? t - l.limit_ms : null;
           const ok = fresh != null && fresh <= l.limit_ms;
+          const stale = fresh == null && best != null;
           const pct = gap == null ? 0 : Math.max(-1, Math.min(1, gap / (l.limit_ms * 0.08)));
           return (
-            <motion.div key={l.stroke + l.distance} role="row" className={`lt-row ${ok ? 'ok' : ''} ${t == null ? 'none' : ''}`}
+            <motion.div key={l.stroke + l.distance} role="row" className={`lt-row ${ok ? 'ok' : ''} ${t == null ? 'none' : ''} ${stale ? 'stale' : ''}`}
               initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
               <Link role="cell" to={`/vyvoj?d=${disciplineKey(l.stroke, l.distance, l.course)}`} className="lt-d">
                 {l.distance} m <small>{strokeName[l.stroke]}</small>
               </Link>
               <span role="cell" className="lt-t">
                 {t != null ? fmtTime(t) : '–'}
-                {fresh == null && best != null && <small title="Čas je starší ako začiatok kvalifikácie">starší</small>}
+                {stale && <small title="Čas je starší ako začiatok kvalifikácie">pred kvalifikáciou</small>}
               </span>
               <span role="cell" className="lt-l">{fmtTime(l.limit_ms)}</span>
               <span role="cell" className="lt-bar" aria-label={gap == null ? 'nezaplávané' : ok ? 'splnené' : `chýba ${fmtGap(gap)}`}>
                 {gap == null ? <em>nezaplávané</em> : (
                   <>
                     <i className="lt-track"><b style={{ ['--p' as any]: pct }} /></i>
-                    <em>{ok ? 'splnené' : fmtGap(gap)}</em>
+                    <em className={fresh == null ? 'old' : ''}>{ok ? 'splnené' : fresh == null ? (gap <= 0 ? 'zopakovať' : fmtGap(gap)) : fmtGap(gap)}</em>
                   </>
                 )}
               </span>

@@ -1,5 +1,5 @@
 // Service worker: appka sa otvorí rýchlo aj pri slabom signáli na plavárni.
-const CACHE = 'kristinka-v1';
+const CACHE = 'kristinka-v2';
 const SHELL = ['/', '/manifest.webmanifest', '/icon-192.png'];
 
 self.addEventListener('install', (e) => {
@@ -21,4 +21,21 @@ self.addEventListener('fetch', (e) => {
     // statické súbory majú v názve hash, môžu byť z cache
     e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((r) => { const copy = r.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); return r; })));
   }
+});
+
+// Upozornenia po pretekoch
+self.addEventListener('push', (e) => {
+  let d = {};
+  try { d = e.data ? e.data.json() : {}; } catch { d = { body: e.data && e.data.text() }; }
+  e.waitUntil(self.registration.showNotification(d.title || 'Kristínka', {
+    body: d.body || '', icon: '/icon-192.png', badge: '/icon-192.png', tag: d.tag, data: { url: d.url || '/' },
+  }));
+});
+self.addEventListener('notificationclick', (e) => {
+  e.notification.close();
+  const url = (e.notification.data && e.notification.data.url) || '/';
+  e.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+    for (const c of list) if ('focus' in c) { c.navigate(url); return c.focus(); }
+    return self.clients.openWindow(url);
+  }));
 });

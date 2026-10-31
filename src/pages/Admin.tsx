@@ -108,6 +108,7 @@ export default function Admin() {
       )}
 
       <PhotoPanel current={heroPhoto} onSaved={reload} />
+      <PushTest />
       {athlete && <ManualSwim athleteId={athlete.id} onSaved={reload} />}
       <Goals goals={goals} onSaved={reload} />
       {athlete && <p className="muted small">V databáze je {swims.length} jej štartov.</p>}
@@ -270,6 +271,25 @@ function PhotoPanel({ current, onSaved }: { current: string | null; onSaved: () 
           {msg && <p className="note-ok" role="status">{msg}</p>}
         </div>
       </div>
+    </section>
+  );
+}
+
+function PushTest() {
+  const [msg, setMsg] = useState<string | null>(null);
+  const run = async () => {
+    setMsg('Posielam…');
+    const { data } = await supabase.auth.getSession();
+    const r = await fetch('/api/push', { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${data.session?.access_token ?? ''}` }, body: JSON.stringify({ test: true }) });
+    const j = await r.json().catch(() => ({}));
+    setMsg(r.ok ? `Odoslané na ${j.sent ?? 0} z ${j.total ?? 0} zariadení.` : j.error ?? 'Chyba');
+  };
+  return (
+    <section className="panel">
+      <h2>Upozornenia</h2>
+      <p className="muted">Po nahratí pretekov s novými Kristínkinými časmi príde upozornenie automaticky. Zapína sa v sekcii Preteky na každom telefóne zvlášť.</p>
+      <button className="btn ghost" onClick={run}>Poslať skúšobné upozornenie</button>
+      {msg && <p className="note">{msg}</p>}
     </section>
   );
 }

@@ -6,9 +6,9 @@ import { fmtDate, fmtGap, fmtTime, type Course, type Stroke } from '../lib/forma
 
 type Sp = { d: number; ms: number }[];
 /** Kumulatívne medzičasy -> úseky (posledný úsek dopočíta z cieľového času) */
-export function laps(splits: Sp | null, total: number | null, step: number) {
+export function laps(splits: Sp | null, total: number | null, step: number, distance: number) {
   if (!splits?.length || !total) return null;
-  const cum = [...splits.filter((s) => s.d % step === 0 && s.ms < total), { d: Math.max(...splits.map((s) => s.d)) + step, ms: total }]
+  const cum = [...splits.filter((s) => s.d % step === 0 && s.d < distance && s.ms < total), { d: distance, ms: total }]
     .sort((a, b) => a.d - b.d);
   const out: { d: number; ms: number }[] = [];
   let prev = { d: 0, ms: 0 };
@@ -26,8 +26,8 @@ interface Rival { swim_ms: number; splits: Sp; race_date: string; athletes: { fi
 export default function Splits({ list, stroke, distance, course, birthYear }: { list: Swim[]; stroke: Stroke; distance: number; course: Course; birthYear: number }) {
   const step = distance >= 400 ? 100 : 50;
   const withSplits = useMemo(
-    () => list.filter((s) => !s.status && s.swim_ms && laps(s.splits, s.swim_ms, step)).sort((a, b) => a.swim_ms! - b.swim_ms!),
-    [list, step],
+    () => list.filter((s) => !s.status && s.swim_ms && laps(s.splits, s.swim_ms, step, distance)).sort((a, b) => a.swim_ms! - b.swim_ms!),
+    [list, step, distance],
   );
   const best = withSplits[0];
   const [rival, setRival] = useState<Rival | null>(null);
@@ -44,13 +44,13 @@ export default function Splits({ list, stroke, distance, course, birthYear }: { 
       .order('swim_ms').limit(1)
       .then(({ data }) => {
         const r = (data ?? [])[0] as unknown as Rival | undefined;
-        if (r && r.swim_ms < best.swim_ms! && laps(r.splits, r.swim_ms, step)) setRival(r);
+        if (r && r.swim_ms < best.swim_ms! && laps(r.splits, r.swim_ms, step, distance)) setRival(r);
       });
   }, [best?.id, stroke, distance, course, birthYear, step]);
 
   if (distance < 100 || !best) return null;
-  const mine = laps(best.splits, best.swim_ms, step)!;
-  const theirs = rival ? laps(rival.splits, rival.swim_ms, step) : null;
+  const mine = laps(best.splits, best.swim_ms, step, distance)!;
+  const theirs = rival ? laps(rival.splits, rival.swim_ms, step, distance) : null;
   const half = mine.length / 2;
   const h1 = mine.slice(0, Math.floor(half)).reduce((a, b) => a + b.ms, 0);
   const h2 = mine.slice(Math.ceil(half)).reduce((a, b) => a + b.ms, 0);
@@ -61,7 +61,7 @@ export default function Splits({ list, stroke, distance, course, birthYear }: { 
 
   // priemer rozdielov druhej a prvej polovice vo všetkých pretekoch s medzičasmi
   const drops = withSplits.map((s) => {
-    const l = laps(s.splits, s.swim_ms, step)!;
+    const l = laps(s.splits, s.swim_ms, step, distance)!;
     const h = l.length / 2;
     return l.slice(Math.ceil(h)).reduce((a, b) => a + b.ms, 0) - l.slice(0, Math.floor(h)).reduce((a, b) => a + b.ms, 0);
   });

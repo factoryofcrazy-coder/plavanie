@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import type { ParsedMeet } from './lenex.js';
 import { fetchMeetLenex } from './splash.js';
+import { notifyMeet } from './push.js';
 
 export const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
 export const SUPABASE_ANON = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
@@ -87,5 +88,7 @@ export async function importMeet(db: SupabaseClient, meetId: number) {
   if (!parsed) return { meetId, ok: false, reason: 'Výsledky (Lenex) pre tieto preteky zatiaľ nie sú zverejnené' };
   if (!parsed.swims.length) return { meetId, ok: false, reason: 'V súbore nie sú žiadne výsledky' };
   const r = await saveMeet(db, meetId, parsed);
-  return { meetId, ok: true, ...r };
+  let push: unknown = null;
+  try { push = await notifyMeet(db, meetId); } catch (e: any) { push = { error: e?.message }; }
+  return { meetId, ok: true, ...r, push };
 }
