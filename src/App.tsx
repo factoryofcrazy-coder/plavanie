@@ -2,9 +2,11 @@ import { lazy, Suspense, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { Loader } from './components/ui';
+import InstallHint from './components/InstallHint';
 import { useData } from './lib/data';
 import Prehlad from './pages/Prehlad';
 import Konkurencia from './pages/Konkurencia';
+import Sestry from './pages/Sestry';
 import Rebricek from './pages/Rebricek';
 import Preteky from './pages/Preteky';
 import Admin from './pages/Admin';
@@ -15,6 +17,7 @@ const NAV = [
   { to: '/', label: 'Prehľad', icon: 'M4 11l8-6 8 6v8H4z' },
   { to: '/vyvoj', label: 'Vývoj', icon: 'M4 17l5-5 4 3 7-8' },
   { to: '/konkurencia', label: 'Konkurencia', icon: 'M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm8 0a3 3 0 1 0 0-6M3 20c0-3 2.2-5 5-5s5 2 5 5m3-5c2.6 0 5 2 5 5' },
+  { to: '/sestry', label: 'Sestry', icon: 'M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm9 2a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5zM2 21c0-3.3 2.7-6 6-6s6 2.7 6 6m1-3c.6-1.8 2.2-3 4-3 2.2 0 4 1.8 4 4' },
   { to: '/rebricek', label: 'Rebríček', icon: 'M5 20V12M12 20V5M19 20v-5' },
   { to: '/preteky', label: 'Preteky', icon: 'M5 4h14v16H5zM5 9h14M10 4v16' },
 ];
@@ -76,6 +79,7 @@ export default function App() {
               <Route path="/" element={<Prehlad />} />
               <Route path="/vyvoj" element={<Suspense fallback={<div className="wrap"><Loader /></div>}><Vyvoj /></Suspense>} />
               <Route path="/konkurencia" element={<Konkurencia />} />
+              <Route path="/sestry" element={<Sestry />} />
               <Route path="/rebricek" element={<Rebricek />} />
               <Route path="/preteky" element={<Preteky />} />
               <Route path="/preteky/:id" element={<Preteky />} />
@@ -85,6 +89,8 @@ export default function App() {
           </motion.div>
         </AnimatePresence>
       </main>
+
+      <InstallHint />
 
       <nav className="tabbar" aria-label="Navigácia">
         {NAV.map((n) => (

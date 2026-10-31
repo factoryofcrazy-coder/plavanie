@@ -1,0 +1,21 @@
+{
+  "name": "Kristínka Hodoňová – plávanie",
+  "short_name": "Kristínka",
+  "description": "Výsledky, osobné rekordy, predikcie a rebríčky plavkyne Kristínky Hodoňovej.",
+  "lang": "sk",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07131d",
+  "theme_color": "#07131d",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Preteky", "url": "/preteky" },
+    { "name": "Rebríček", "url": "/rebricek" }
+  ]
+}
