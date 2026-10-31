@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { fetchMeetIndex, listNationMeets } from '../lib/splash';
+import { fetchMeetIndex, listNationMeets } from '../lib/splash.js';
 
 // Verejné: disciplíny pretekov s PDF odkazmi, alebo zoznam slovenských pretekov (?list=SVK)
 export default async function handler(req: VercelRequest, res: VercelResponse) {

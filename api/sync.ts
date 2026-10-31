@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { adminClient, importMeet } from '../lib/importer';
-import { listNationMeets } from '../lib/splash';
+import { adminClient, importMeet } from '../lib/importer.js';
+import { listNationMeets } from '../lib/splash.js';
 
 export const config = { maxDuration: 60 };
 

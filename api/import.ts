@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { importMeet, verifyEditor } from '../lib/importer';
+import { importMeet, verifyEditor } from '../lib/importer.js';
 
 export const config = { maxDuration: 60 };
 

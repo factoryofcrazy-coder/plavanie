@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { fetchMeetLenex } from '../lib/splash';
-import { fold } from '../lib/lenex';
+import { fetchMeetLenex } from '../lib/splash.js';
+import { fold } from '../lib/lenex.js';
 
 // Diagnostika: rozparsuje Lenex bez zápisu (chránené kľúčom)
 export default async function handler(req: VercelRequest, res: VercelResponse) {

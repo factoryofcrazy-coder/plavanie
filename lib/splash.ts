@@ -1,5 +1,5 @@
 // Čítanie dát z live.swimrankings.net (Splash Meet Manager – výsledky SPF)
-import { parseLenexXml, unzipLenex, type ParsedMeet } from './lenex';
+import { parseLenexXml, unzipLenex, type ParsedMeet } from './lenex.js';
 
 export const LIVE_BASE = 'https://live.swimrankings.net';
 const UA = 'Mozilla/5.0 (compatible; KristinkaPlavanie/1.0; osobna stranka plavkyne)';

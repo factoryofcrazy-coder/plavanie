@@ -1,6 +1,6 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
-import type { ParsedMeet } from './lenex';
-import { fetchMeetLenex } from './splash';
+import type { ParsedMeet } from './lenex.js';
+import { fetchMeetLenex } from './splash.js';
 
 export const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
 export const SUPABASE_ANON = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';

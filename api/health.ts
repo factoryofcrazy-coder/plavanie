@@ -15,7 +15,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   await probe('live_index', 'https://live.swimrankings.net/?nation=SVK');
   await probe('meet_lxf', 'https://live.swimrankings.net/49857/results.lxf');
   try {
-    const m = await import('../lib/splash');
+    const m = await import('../lib/splash.js');
     const idx = await m.fetchMeetIndex(49857);
     out.meet_index = idx ? { title: idx.title, events: idx.events.length, first: idx.events[0] } : null;
     if (req.query.key === process.env.CRON_SECRET) {
