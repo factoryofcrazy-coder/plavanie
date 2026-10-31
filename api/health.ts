@@ -13,12 +13,13 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
   };
   const probeUrl = String(req.query.probe ?? '');
-  if (req.query.key === process.env.CRON_SECRET && /^https:\/\/(www\.)?swimmsvk\.sk\//.test(probeUrl)) {
+  if (req.query.key === process.env.CRON_SECRET && /^https:\/\/((www\.)?swimmsvk\.sk|live\.swimrankings\.net)\//.test(probeUrl)) {
     const r = await fetch(probeUrl, { headers: { 'User-Agent': 'Mozilla/5.0' } });
     const html = await r.text();
     const hits = new Set<string>();
     for (const m of html.matchAll(/[^"'\s<>]*(swimrankings|athleteId|iframe|widget)[^"'\s<>]*/gi)) hits.add(m[0].slice(0, 300));
-    out.probe = { status: r.status, len: html.length, hits: [...hits].slice(0, 40) };
+    const row = html.split(/<tr[\s>]/i).find((r) => /href="[^"]*\/\d{4,6}\/"/.test(r));
+    out.probe = { status: r.status, len: html.length, row: row?.slice(0, 3000), hits: [...hits].slice(0, 10) };
     return res.status(200).json(out);
   }
   await probe('live_index', 'https://live.swimrankings.net/?nation=SVK');
