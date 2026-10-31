@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { adminClient, importMeet } from '../lib/importer.js';
-import { listNationMeets } from '../lib/splash.js';
+import { listNationMeets, listSwimappMeets } from '../lib/splash.js';
 
 export const config = { maxDuration: 60 };
 
@@ -11,6 +11,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!secret || given !== secret) return res.status(401).json({ error: 'Neplatný kľúč' });
 
   const db = await adminClient();
+  if (req.query.source === 'swimapp') {
+    // doplnenie celej sezóny z termínovej listiny SPF (iba nenahraté preteky, bez masters a diaľkového plávania)
+    const all = await listSwimappMeets(String(req.query.url || 'https://www.swimapp.sk/tl/'));
+    const { data: have } = await db.from('meets').select('id');
+    const known = new Set((have ?? []).map((m: any) => m.id));
+    const skip = /masters|diaľkov|dialkov|vodn[eé] p[oó]lo|synchr|umeleck/i;
+    const todo = all.filter((m) => !known.has(m.id) && !skip.test(m.name));
+    if (req.query.dry) return res.status(200).json({ found: all.length, todo });
+    const started = Date.now();
+    const results: any[] = [];
+    for (const m of todo) {
+      if (Date.now() - started > 45_000) break;
+      try { results.push({ name: m.name, ...(await importMeet(db, m.id)) }); } catch (e: any) { results.push({ meetId: m.id, ok: false, reason: e?.message }); }
+    }
+    return res.status(200).json({ found: all.length, remaining: todo.length - results.length, results });
+  }
   const listed = await listNationMeets('SVK');
   const { data: known } = await db.from('meets').select('id,date_to,imported_at');
   const knownMap = new Map((known ?? []).map((m: any) => [m.id, m]));

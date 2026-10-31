@@ -125,3 +125,20 @@ export async function fetchMeetIndex(meetId: number) {
     events: [...events.values()].sort((a, b) => a.number - b.number),
   };
 }
+
+/** Termínová listina SPF (swimapp.sk): ID pretekov z live.swimrankings.net s názvom */
+export async function listSwimappMeets(url = 'https://www.swimapp.sk/tl/'): Promise<{ id: number; name: string }[]> {
+  const res = await fetch(url, { headers: { 'User-Agent': UA, 'Accept-Language': 'sk' }, redirect: 'follow' });
+  if (!res.ok) throw new Error(`swimapp.sk vrátil ${res.status}`);
+  const html = await res.text();
+  const out = new Map<number, { id: number; name: string }>();
+  // bloky podujatí začínajú nadpisom <h2>
+  const blocks = html.split(/<h2[\s>]/i);
+  for (const b of blocks) {
+    const ids = [...b.matchAll(/live\.swimrankings\.net\/(\d{4,6})/gi)].map((m) => +m[1]);
+    if (!ids.length) continue;
+    const name = stripTags(b.split(/<\/h2>/i)[0]).slice(0, 160);
+    for (const id of ids) if (!out.has(id)) out.set(id, { id, name });
+  }
+  return [...out.values()];
+}
