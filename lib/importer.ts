@@ -77,6 +77,8 @@ export async function saveMeet(db: SupabaseClient, meetId: number, meet: ParsedM
     if (error) throw new Error('swims: ' + error.message);
     saved += part.length;
   }
+  // historické časy, ktoré sú už v oficiálnych výsledkoch, sa zlúčia
+  await db.rpc('dedupe_history');
   return { meet: meet.name, athletes: ids.size, swims: saved };
 }
 

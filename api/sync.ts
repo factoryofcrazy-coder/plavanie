@@ -40,6 +40,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return !k || recent(k.date_to); // nové alebo ešte prebiehajúce/čerstvé preteky
     });
 
+  // doplň aj preteky z termínovej listiny SPF, ktoré ešte nie sú nahraté
+  try {
+    const skip = /masters|diaľkov|dialkov|vodn[eé] p[oó]lo|synchr|umeleck/i;
+    for (const m of await listSwimappMeets()) if (!knownMap.has(m.id) && !skip.test(m.name) && !todo.includes(m.id)) todo.push(m.id);
+  } catch { /* termínová listina nedostupná */ }
+
   const extra = String(req.query.meets ?? '')
     .split(/[\s,]+/)
     .map(Number)
