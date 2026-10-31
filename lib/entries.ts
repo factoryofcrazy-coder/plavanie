@@ -115,7 +115,7 @@ export function fromStartPdfText(lines: string[], who: Who): Omit<StartEntry, 'e
   };
 }
 
-async function pdfLines(url: string): Promise<string[] | null> {
+export async function pdfLines(url: string): Promise<string[] | null> {
   const res = await fetch(url, { headers: { 'User-Agent': UA } });
   if (!res.ok) return null;
   const { extractText, getDocumentProxy } = await import('unpdf');

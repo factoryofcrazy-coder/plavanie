@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { listNationMeets, fetchMeetIndex } from '../lib/splash.js';
-import { meetStartlist, type Who } from '../lib/entries.js';
+import { meetStartlist, pdfLines, type Who } from '../lib/entries.js';
 
 export const config = { maxDuration: 60 };
 
@@ -20,6 +20,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       const page = await pdf.getPage(1);
       const tc: any = await page.getTextContent();
       return res.json({ ev, events: idx!.events.slice(0, 40), items: tc.items.slice(0, 160).map((i: any) => [Math.round(i.transform[4]), Math.round(i.transform[5]), i.str]) });
+    }
+    if (req.query.lines) {
+      const lines = await pdfLines(`https://live.swimrankings.net/${parseInt(String(req.query.lines), 10)}/StartList_${parseInt(String(req.query.ev ?? '1'), 10)}.pdf`);
+      return res.json({ lines });
     }
     if (req.query.meet) {
       // test na konkrétnych pretekoch
