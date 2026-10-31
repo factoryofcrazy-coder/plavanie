@@ -117,6 +117,7 @@ interface Ctx {
   error: string | null;
   athlete: Athlete | null;
   displayName: string;
+  heroPhoto: string | null;
   swims: Swim[];
   pbs: PB[];
   goals: Goal[];
@@ -131,6 +132,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [athlete, setAthlete] = useState<Athlete | null>(null);
   const [displayName, setDisplayName] = useState('Kristínka Hodoňová');
+  const [heroPhoto, setHeroPhoto] = useState<string | null>(null);
   const [swims, setSwims] = useState<Swim[]>([]);
   const [goals, setGoals] = useState<Goal[]>([]);
   const [session, setSession] = useState<Session | null>(null);
@@ -142,6 +144,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       const { data: settings } = await supabase.from('settings').select('key,value');
       const s = Object.fromEntries((settings ?? []).map((r: any) => [r.key, r.value]));
       if (s.main_athlete_name) setDisplayName(s.main_athlete_name);
+      setHeroPhoto(s.hero_photo_url || null);
       const { data: a } = await supabase.from('athletes').select('*').eq('key', s.main_athlete_key ?? '').maybeSingle();
       setAthlete((a as Athlete) ?? null);
       setSwims(a ? await fetchSwims(a.id) : []);
@@ -173,7 +176,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const pbs = useMemo(() => computePBs(swims), [swims]);
   return (
-    <DataCtx.Provider value={{ loading, error, athlete, displayName, swims, pbs, goals, session, isEditor, reload }}>
+    <DataCtx.Provider value={{ loading, error, athlete, displayName, heroPhoto, swims, pbs, goals, session, isEditor, reload }}>
       {children}
     </DataCtx.Provider>
   );

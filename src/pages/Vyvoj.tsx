@@ -107,24 +107,24 @@ export default function Vyvoj() {
               <ComposedChart data={chart} margin={{ top: 10, right: 12, bottom: 0, left: 4 }}>
                 <defs>
                   <linearGradient id="bandg" x1="0" y1="0" x2="1" y2="0">
-                    <stop offset="0%" stopColor="var(--water-2)" stopOpacity="0.35" />
-                    <stop offset="100%" stopColor="var(--water-2)" stopOpacity="0.08" />
+                    <stop offset="0%" stopColor="#39d5db" stopOpacity="0.35" />
+                    <stop offset="100%" stopColor="#39d5db" stopOpacity="0.06" />
                   </linearGradient>
                 </defs>
-                <CartesianGrid stroke="var(--tile)" vertical={false} />
-                <XAxis dataKey="t" type="number" scale="time" domain={['dataMin', 'dataMax']} tickFormatter={(t) => new Date(t).toLocaleDateString('sk-SK', { month: 'numeric', year: '2-digit' })} stroke="var(--ink-soft)" tickLine={false} fontSize={12} />
-                <YAxis reversed domain={['auto', 'auto']} tickFormatter={(v) => fmtTime(v)} stroke="var(--ink-soft)" tickLine={false} axisLine={false} width={56} fontSize={12} />
+                <CartesianGrid stroke="rgba(6,27,42,.08)" vertical={false} />
+                <XAxis dataKey="t" type="number" scale="time" domain={['dataMin', 'dataMax']} tickFormatter={(t) => new Date(t).toLocaleDateString('sk-SK', { month: 'numeric', year: '2-digit' })} stroke="#4a5d6b" tickLine={false} fontSize={12} />
+                <YAxis reversed domain={['auto', 'auto']} tickFormatter={(v) => fmtTime(v)} stroke="#4a5d6b" tickLine={false} axisLine={false} width={56} fontSize={12} />
                 <Tooltip
-                  contentStyle={{ borderRadius: 12, border: '1px solid var(--tile)', fontFamily: 'var(--body)' }}
+                  contentStyle={{ borderRadius: 2, border: '1px solid rgba(6,27,42,.2)', fontFamily: 'var(--body)', background: '#fbfaf7' }}
                   labelFormatter={(t) => fmtDate(new Date(t as number).toISOString())}
                   formatter={(v: any, n: any) => [Array.isArray(v) ? `${fmtTime(v[0])} až ${fmtTime(v[1])}` : fmtTime(v), n === 'ms' ? 'čas' : n === 'pb' ? 'rekord' : n === 'f' ? 'predikcia' : 'pásmo']}
                 />
                 {fc.ok && <Area dataKey="band" stroke="none" fill="url(#bandg)" isAnimationActive animationDuration={900} connectNulls />}
-                <Line dataKey="pb" type="stepAfter" stroke="var(--deep)" strokeWidth={2} dot={false} connectNulls isAnimationActive animationDuration={1100} />
-                {fc.ok && <Line dataKey="f" stroke="var(--water)" strokeWidth={2} strokeDasharray="6 5" dot={false} connectNulls animationBegin={600} />}
-                <Scatter dataKey="ms" fill="var(--water)" stroke="#fff" strokeWidth={1.5} />
-                {goal && <ReferenceLine y={goal.target_ms} stroke="var(--rope-red)" strokeDasharray="3 4" strokeWidth={1.5} />}
-                <ReferenceLine x={now} stroke="var(--ink-soft)" strokeOpacity={0.4} />
+                <Line dataKey="pb" type="stepAfter" stroke="#061b2a" strokeWidth={2} dot={false} connectNulls isAnimationActive animationDuration={1100} />
+                {fc.ok && <Line dataKey="f" stroke="#0b858b" strokeWidth={2} strokeDasharray="6 5" dot={false} connectNulls animationBegin={600} />}
+                <Scatter dataKey="ms" fill="#061b2a" stroke="#fbfaf7" strokeWidth={2} />
+                {goal && <ReferenceLine y={goal.target_ms} stroke="#e0563f" strokeDasharray="3 4" strokeWidth={1.5} />}
+                <ReferenceLine x={now} stroke="#4a5d6b" strokeOpacity={0.3} strokeDasharray="2 4" />
               </ComposedChart>
             </ResponsiveContainer>
           </section>
@@ -137,7 +137,7 @@ export default function Vyvoj() {
                   <button className="swim-row" onClick={() => setOpen(open === s.id ? null : s.id)} aria-expanded={open === s.id} disabled={!s.splits}>
                     <span className="sd">{fmtDate(s.race_date)}</span>
                     <span className="sm">{s.meets?.name ?? s.competition ?? 'Preteky'}{s.swim_ms === pb && <em className="tag pb">osobák</em>}</span>
-                    <span className="st">{s.status ?? fmtTime(s.swim_ms)}</span>
+                    <span className="stime">{s.status ?? fmtTime(s.swim_ms)}</span>
                     <span className="sp">{s.points ? `${s.points} b.` : ''}</span>
                   </button>
                   {resultPdf(s.meet_id, s.event_number) ? (

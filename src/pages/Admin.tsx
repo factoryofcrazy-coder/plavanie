@@ -32,7 +32,7 @@ function Login() {
 }
 
 export default function Admin() {
-  const { session, isEditor, athlete, goals, reload, swims } = useData();
+  const { session, isEditor, athlete, goals, reload, swims, heroPhoto } = useData();
   const [meets, setMeets] = useState('');
   const [busy, setBusy] = useState(false);
   const [results, setResults] = useState<ImportResult[]>([]);
@@ -107,6 +107,7 @@ export default function Admin() {
         </section>
       )}
 
+      <PhotoPanel current={heroPhoto} onSaved={reload} />
       {athlete && <ManualSwim athleteId={athlete.id} onSaved={reload} />}
       <Goals goals={goals} onSaved={reload} />
       {athlete && <p className="muted small">V databáze je {swims.length} jej štartov.</p>}
@@ -152,7 +153,7 @@ function ManualSwim({ athleteId, onSaved }: { athleteId: number; onSaved: () => 
         </label>
         <label><span>Čas</span><input value={f.time} onChange={(e) => setF({ ...f, time: e.target.value })} placeholder="1:27.78" inputMode="decimal" required /></label>
       </div>
-      {msg && <p className="note" role="status">{msg}</p>}
+      {msg && <p className="note-ok" role="status">{msg}</p>}
       <button className="btn">Uložiť výsledok</button>
     </form>
   );
@@ -208,8 +209,67 @@ function Goals({ goals, onSaved }: { goals: any[]; onSaved: () => void }) {
         <label><span>Cieľový čas</span><input value={f.time} onChange={(e) => setF({ ...f, time: e.target.value })} placeholder="29.00" required /></label>
         <label className="wide"><span>Poznámka</span><input value={f.label} onChange={(e) => setF({ ...f, label: e.target.value })} placeholder="napr. limit na M SR" /></label>
       </div>
-      {msg && <p className="note" role="status">{msg}</p>}
+      {msg && <p className="note-ok" role="status">{msg}</p>}
       <button className="btn">Pridať cieľ</button>
     </form>
+  );
+}
+
+/** Zmenší fotku v prehliadači (max 1800 px, WebP), aby sa stránka načítala rýchlo */
+async function shrink(file: File): Promise<Blob> {
+  const bmp = await createImageBitmap(file);
+  const k = Math.min(1, 1800 / Math.max(bmp.width, bmp.height));
+  const c = document.createElement('canvas');
+  c.width = Math.round(bmp.width * k);
+  c.height = Math.round(bmp.height * k);
+  c.getContext('2d')!.drawImage(bmp, 0, 0, c.width, c.height);
+  return new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error('Fotku sa nepodarilo spracovať'))), 'image/webp', 0.84));
+}
+
+function PhotoPanel({ current, onSaved }: { current: string | null; onSaved: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const save = async (url: string) => {
+    const { error } = await supabase.from('settings').upsert({ key: 'hero_photo_url', value: url });
+    if (error) throw error;
+  };
+  const upload = async (file: File) => {
+    setBusy(true);
+    setMsg(null);
+    try {
+      const blob = await shrink(file);
+      const path = `hero-${Date.now()}.webp`;
+      const { error } = await supabase.storage.from('media').upload(path, blob, { contentType: 'image/webp', upsert: true });
+      if (error) throw error;
+      const { data } = supabase.storage.from('media').getPublicUrl(path);
+      await save(data.publicUrl);
+      setMsg('Fotka je nahratá a zobrazuje sa na úvodnej stránke.');
+      onSaved();
+    } catch (e: any) {
+      setMsg(`Nahrávanie zlyhalo: ${e?.message ?? e}`);
+    } finally {
+      setBusy(false);
+    }
+  };
+  const remove = async () => {
+    setBusy(true);
+    try { await save(''); setMsg('Fotka je odstránená, zobrazuje sa bazén.'); onSaved(); } catch (e: any) { setMsg(`Chyba: ${e?.message ?? e}`); } finally { setBusy(false); }
+  };
+  return (
+    <section className="panel">
+      <h2>Fotka na úvodnej stránke</h2>
+      <p className="muted">Najlepšie funguje fotka na výšku z pretekov alebo tréningu. Fotka bude verejne viditeľná pre každého, kto stránku otvorí. Bez fotky sa zobrazuje bazén zhora.</p>
+      <div className="photo-row">
+        <div className="thumb">{current && <img src={current} alt="Aktuálna fotka" />}</div>
+        <div style={{ display: 'grid', gap: 12, justifyItems: 'start' }}>
+          <label className="btn">
+            {busy ? 'Nahrávam…' : current ? 'Vymeniť fotku' : 'Nahrať fotku'}
+            <input type="file" accept="image/jpeg,image/png,image/webp" hidden disabled={busy} onChange={(e) => e.target.files?.[0] && upload(e.target.files[0])} />
+          </label>
+          {current && <button className="btn ghost small" onClick={remove} disabled={busy}>Odstrániť fotku</button>}
+          {msg && <p className="note-ok" role="status">{msg}</p>}
+        </div>
+      </div>
+    </section>
   );
 }

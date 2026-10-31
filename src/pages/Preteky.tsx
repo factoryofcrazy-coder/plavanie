@@ -139,8 +139,10 @@ export default function Preteky() {
       </header>
 
       <section className="block">
-        <h2>Slovenské preteky</h2>
-        <p className="muted section-note">Aktuálne a nadchádzajúce preteky. Ťukni na ne a otvoríš štartovky a výsledky v PDF.</p>
+        <div className="block-head">
+          <h2>Slovenské preteky</h2>
+          <p className="muted small">Ťukni na preteky a otvoríš štartovky a výsledky v PDF.</p>
+        </div>
         {listErr ? (
           <p className="muted">Zoznam pretekov sa nepodarilo načítať. Skús to o chvíľu.</p>
         ) : !listed ? (
@@ -172,7 +174,7 @@ export default function Preteky() {
         <div className="block-head">
           <h2>Kristínkine preteky</h2>
           {seasons.length > 1 && (
-            <div className="seg wrap" role="radiogroup" aria-label="Sezóna">
+            <div className="seg" role="radiogroup" aria-label="Sezóna">
               {seasons.map((x) => (
                 <button key={x.label} role="radio" aria-checked={x.label === activeSeason?.label} className={x.label === activeSeason?.label ? 'on' : ''} onClick={() => setSeason(x.label)}>
                   {x.label}
@@ -195,13 +197,18 @@ export default function Preteky() {
               const nPb = g.filter((x) => pbIds.has(x.id)).length;
               return (
                 <article key={key} className="meet">
+                  <time className="meet-date" dateTime={s0.race_date}>
+                    <b>{new Date(s0.race_date).getDate()}</b>
+                    <span>{['jan','feb','mar','apr','máj','jún','júl','aug','sep','okt','nov','dec'][new Date(s0.race_date).getMonth()]} {new Date(s0.race_date).getFullYear()}</span>
+                  </time>
+                  <div>
                   <header>
                     <div>
                       <h3>{meetTitle(s0)}</h3>
-                      <p className="muted">{[meetCity(s0), fmtDate(s0.race_date), courseName[s0.course]].filter(Boolean).join(', ')}</p>
+                      <p className="muted">{[meetCity(s0), courseName[s0.course]].filter(Boolean).join(' · ')}</p>
                     </div>
                     <div className="meet-actions">
-                      {nPb > 0 && <span className="tag pb">{nPb} {plural(nPb, 'osobák', 'osobáky', 'osobákov')}</span>}
+                      {nPb > 0 && <span className="flag">{nPb} {plural(nPb, 'osobák', 'osobáky', 'osobákov')}</span>}
                       {s0.meet_id && s0.meet_id > 999 && (
                         <button className="btn ghost small" onClick={() => nav(`/preteky/${s0.meet_id}`)}>Všetky disciplíny</button>
                       )}
@@ -227,6 +234,7 @@ export default function Preteky() {
                     </button>
                   )}
                   {g.some((x) => !x.meet_id) && <p className="src">{s0.meet_id ? 'Doplnené' : 'Najlepšie časy sezóny'} podľa swimrankings.net</p>}
+                  </div>
                 </article>
               );
             })}

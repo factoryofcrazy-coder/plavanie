@@ -195,6 +195,12 @@ export default function Konkurencia() {
                                 <span className={o.best.swim_ms! < p.best.swim_ms! ? 'gap ahead' : 'gap behind'}>
                                   {fmtGap(o.best.swim_ms! - p.best.swim_ms!)}
                                 </span>
+                                <span className="diff-bar" aria-hidden="true">
+                                  <i
+                                    className={o.best.swim_ms! < p.best.swim_ms! ? 'ahead' : 'behind'}
+                                    style={{ width: `${Math.min(50, (Math.abs(o.best.swim_ms! - p.best.swim_ms!) / p.best.swim_ms!) * 1000)}%` }}
+                                  />
+                                </span>
                               </>
                             ) : '–'}
                           </td>

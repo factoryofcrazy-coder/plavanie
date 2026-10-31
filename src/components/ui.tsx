@@ -54,7 +54,7 @@ export function DisciplinePicker({ value, onChange, available }: { value: Disc; 
           </button>
         ))}
       </div>
-      <div className="seg wrap" role="radiogroup" aria-label="Spôsob">
+      <div className="seg" role="radiogroup" aria-label="Spôsob">
         {STROKES.map((s) => (
           <button
             key={s}

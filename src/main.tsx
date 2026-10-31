@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import '@fontsource-variable/bricolage-grotesque/standard.css';
+import '@fontsource-variable/archivo/wdth.css';
 import '@fontsource-variable/onest/index.css';
 import './styles.css';
 import App from './App';

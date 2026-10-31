@@ -118,7 +118,7 @@ export default function Rebricek() {
           <section className="rank-hero">
             {mine ? (
               <>
-                <span className="rank-big">{mine.rank}.</span>
+                <span className="rank-big" aria-label={`${mine.rank}. miesto`}>{mine.rank}</span>
                 <div>
                   <p className="rank-line">
                     {me!.first_name} je <b>{mine.rank}.</b> z {rows.length} v disciplíne {disciplineLabel(d.distance, d.stroke)} ({courseShort[d.course]} bazén).
