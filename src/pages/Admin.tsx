@@ -275,20 +275,63 @@ function PhotoPanel({ current, onSaved }: { current: string | null; onSaved: () 
   );
 }
 
+const PUSH_LINKS = [
+  ['/', 'Prehľad'], ['/preteky', 'Preteky'], ['/vyvoj', 'Vývoj'], ['/rebricek', 'Rebríček'], ['/konkurencia', 'Konkurencia'], ['/sestry', 'Sestry'],
+] as const;
+
 function PushTest() {
+  const [title, setTitle] = useState('');
+  const [body, setBody] = useState('');
+  const [url, setUrl] = useState('/');
+  const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  const run = async () => {
-    setMsg('Posielam…');
+  const [count, setCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    supabase.from('push_subscriptions').select('endpoint', { count: 'exact', head: true }).then(({ count }) => setCount(count ?? 0));
+  }, [msg]);
+
+  const send = async (payload: Record<string, unknown>) => {
+    setBusy(true); setMsg('Posielam…');
     const { data } = await supabase.auth.getSession();
-    const r = await fetch('/api/push', { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${data.session?.access_token ?? ''}` }, body: JSON.stringify({ test: true }) });
+    const r = await fetch('/api/push', { method: 'POST', headers: { 'content-type': 'application/json', authorization: `Bearer ${data.session?.access_token ?? ''}` }, body: JSON.stringify(payload) });
     const j = await r.json().catch(() => ({}));
+    setBusy(false);
     setMsg(r.ok ? `Odoslané na ${j.sent ?? 0} z ${j.total ?? 0} zariadení.` : j.error ?? 'Chyba');
+    return r.ok;
   };
+
+  const submit = async (e: FormEvent) => {
+    e.preventDefault();
+    if (await send({ title: title.trim(), body: body.trim(), url })) { setTitle(''); setBody(''); }
+  };
+
   return (
     <section className="panel">
       <h2>Upozornenia</h2>
-      <p className="muted">Po nahratí pretekov s novými Kristínkinými časmi príde upozornenie automaticky. Zapína sa v sekcii Preteky na každom telefóne zvlášť.</p>
-      <button className="btn ghost" onClick={run}>Poslať skúšobné upozornenie</button>
+      <p className="muted">
+        Po nahratí pretekov s novými Kristínkinými časmi príde upozornenie automaticky. Tu môžeš poslať aj vlastnú správu.
+        {count != null && <> Prihlásené zariadenia: <b>{count}</b>.</>}
+      </p>
+      <form className="form-grid push-form" onSubmit={submit}>
+        <label><span>Nadpis</span><input value={title} maxLength={60} onChange={(e) => setTitle(e.target.value)} placeholder="Napr. Zajtra preteky v Trenčíne" required /></label>
+        <label className="wide"><span>Správa</span><textarea rows={3} value={body} maxLength={240} onChange={(e) => setBody(e.target.value)} placeholder="Text, ktorý sa zobrazí v upozornení" required /></label>
+        <label><span>Po ťuknutí otvoriť</span>
+          <select value={url} onChange={(e) => setUrl(e.target.value)}>
+            {PUSH_LINKS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+          </select>
+        </label>
+        {(title || body) && (
+          <div className="push-preview wide" aria-label="Náhľad">
+            <img src="/icon-192.png" alt="" width="36" height="36" />
+            <div><b>{title || 'Nadpis'}</b><p>{body || 'Text správy'}</p></div>
+          </div>
+        )}
+        <div className="push-actions wide">
+          <button className="btn" disabled={busy || !title.trim() || !body.trim()}>Poslať všetkým</button>
+          <button type="button" className="btn ghost" disabled={busy} onClick={() => send({ test: true })}>Skúšobné upozornenie</button>
+        </div>
+      </form>
       {msg && <p className="note">{msg}</p>}
     </section>
   );

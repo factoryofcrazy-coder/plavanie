@@ -698,3 +698,10 @@ select:focus, input:focus, textarea:focus { outline: none; border-color: var(--t
 .lt-row.stale .lt-track b { background: var(--steel); }
 .next .next-meet:first-of-type { border-top: 0; padding-top: 4px; }
 .limits-targets { margin: -4px 0 18px; }
+
+/* vlastné upozornenie */
+.push-preview { display: flex; gap: 12px; align-items: flex-start; background: rgba(240, 240, 240, .9); border-radius: 14px; padding: 12px 14px; max-width: 420px; box-shadow: 0 4px 18px rgba(6, 27, 42, .12); }
+.push-preview img { border-radius: 8px; }
+.push-preview p { margin: 2px 0 0; font-size: .88rem; color: var(--ink-2); white-space: pre-wrap; }
+.push-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.push-form .wide { grid-column: 1 / -1; }
